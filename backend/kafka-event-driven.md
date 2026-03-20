@@ -2,6 +2,8 @@
 
 > **Source:** Extracted from `notes/All_chats.md` (Akamai SDE-II prep). Content preserved; reorganized into Concepts vs Interview sections.
 
+**How to read:** Start with **At a glance** / talk track if present, then the full chapter. **Fenced code blocks** are copy-paste examples; **tables** compare options; **ASCII diagrams** use monospace — widen the pane or scroll horizontally.
+
 ## Concepts
 
 > *Skim **At a glance** first — a short on-ramp. Below the line is the full chapter.*
@@ -54,16 +56,20 @@ Example:
 E-Commerce: When a user places an order → Kafka Topic: order_created → consumed by Inventory MS, Payment MS, Notification MS.
 
 2️⃣ Core Concepts
-Concept	Description
-Producer	Application/service that publishes messages to a Kafka topic.
-Consumer	Application/service that reads messages from a Kafka topic.
-Topic	Category or feed name to which records are published.
-Partition	Topics are divided into partitions → enables parallelism.
-Offset	Unique identifier of a record in a partition. Consumers track offsets.
-Broker	Kafka server that stores messages and serves clients.
-Cluster	Collection of brokers for fault-tolerance and scalability.
-Consumer Group	A group of consumers that share reading of a topic (load balancing).
+
+| Concept | Description |
+|---------|-------------|
+| Producer | Application/service that publishes messages to a Kafka topic. |
+| Consumer | Application/service that reads messages from a Kafka topic. |
+| Topic | Category or feed name to which records are published. |
+| Partition | Topics are divided into partitions → enables parallelism. |
+| Offset | Unique identifier of a record in a partition. Consumers track offsets. |
+| Broker | Kafka server that stores messages and serves clients. |
+| Cluster | Collection of brokers for fault-tolerance and scalability. |
+| Consumer Group | A group of consumers that share reading of a topic (load balancing). |
 3️⃣ Kafka Architecture
+
+```text
           ┌───────────────┐
           │   Producer    │
           └───────┬───────┘
@@ -87,6 +93,8 @@ Partition 0   Partition 1   Partition 2
 │ Consumer Group│
 │  (Consumers)  │
 └───────────────┘
+```
+
 Notes:
 
 Each partition is ordered, but Kafka doesn’t guarantee ordering across partitions.
@@ -249,6 +257,7 @@ please draw the diagram
 
 
 Kafka System Architecture Diagram
+```text
                    ┌───────────────┐
                    │   Producer    │
                    │ (Microservice)│
@@ -286,6 +295,8 @@ Kafka System Architecture Diagram
      │ Grafana /   │
      │ Kafka Manager│
      └─────────────┘
+```
+
 Flow Explanation
 Producer
 

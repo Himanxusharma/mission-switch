@@ -2,6 +2,8 @@
 
 > **Source:** Extracted from `notes/All_chats.md` (Akamai SDE-II prep). Content preserved; reorganized into Concepts vs Interview sections.
 
+**How to read:** Start with **At a glance** / talk track if present, then the full chapter. **Fenced code blocks** are copy-paste examples; **tables** compare options; **ASCII diagrams** use monospace — widen the pane or scroll horizontally.
+
 ## Concepts
 
 > *Skim **At a glance** first — a short on-ramp. Below the line is the full chapter.*
@@ -32,6 +34,8 @@
 
 ---
 ### DSA (interview-level)
+
+> **Layout:** The **PART / Step** labels below are from the original export. Skim **At a glance** above first; use your own `###` subheadings in drills if you split this file further.
 
 Goal: **pattern recognition** and clear communication—not only accepting random problems without a repeatable process.
 

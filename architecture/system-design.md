@@ -2,6 +2,8 @@
 
 > **Source:** Extracted from `notes/All_chats.md` (Akamai SDE-II prep). Content preserved; reorganized into Concepts vs Interview sections.
 
+**How to read:** Start with **At a glance** / talk track if present, then the full chapter. **Fenced code blocks** are copy-paste examples; **tables** compare options; **ASCII diagrams** use monospace — widen the pane or scroll horizontally.
+
 ## Concepts
 
 > *Skim **At a glance** first — a short on-ramp. Below the line is the full chapter.*
@@ -1502,6 +1504,7 @@ give me diagram of the ssytem design that we made for our 5 appliation one by on
 
 
 1️⃣ URL Shortener System (like Bitly)
+```text
          ┌─────────────┐
          │   Client    │
          └─────┬──────┘
@@ -1527,6 +1530,8 @@ give me diagram of the ssytem design that we made for our 5 appliation one by on
         │   Cache (Redis) │
         │ Hot URLs        │
         └────────────────┘
+```
+
 Highlights:
 
 Microservice + DB + Cache
@@ -1536,6 +1541,7 @@ API for creating and resolving URLs
 Scales horizontally with sharding
 
 2️⃣ Chat Application (like WhatsApp)
+```text
          ┌─────────────┐
          │   Client    │
          │ Web / Mobile│
@@ -1564,6 +1570,8 @@ Scales horizontally with sharding
         │ Redis Cache  │
         │ Online Users │
         └──────────────┘
+```
+
 Highlights:
 
 Real-time WebSocket communication
@@ -1573,6 +1581,7 @@ Queue for async message delivery
 NoSQL DB for horizontal scaling
 
 3️⃣ E-Commerce Platform
+```text
          ┌─────────────┐
          │   Client    │
          └─────┬──────┘
@@ -1595,6 +1604,8 @@ NoSQL DB for horizontal scaling
        │ Queue │ │ CDN   │
        │ Kafka │ │ Assets│
        └───────┘ └───────┘
+```
+
 Highlights:
 
 Microservices for each business domain
@@ -1604,6 +1615,7 @@ Async pipelines for notifications and recommendations
 CDN for static content
 
 4️⃣ Video Streaming Platform (like Netflix/YouTube)
+```text
          ┌─────────────┐
          │   Client    │
          │ Web / Mobile│
@@ -1627,6 +1639,8 @@ CDN for static content
          ┌──────────────────────┐
          │ CDN (Edge Caching)   │
          └──────────────────────┘
+```
+
 Highlights:
 
 Object storage + CDN for global delivery
@@ -1636,6 +1650,7 @@ Transcoding service for multi-resolution videos
 Recommendation and analytics microservices
 
 5️⃣ Job Portal (like LinkedIn / Naukri)
+```text
          ┌─────────────┐
          │   Client    │
          │ Web / Mobile│
@@ -1666,6 +1681,8 @@ Recommendation and analytics microservices
    │ Cron Jobs / Background   │
    │ Notifications / Reports  │
    └─────────────────────────┘
+```
+
 Highlights:
 
 Microservices for all business domains
@@ -1686,6 +1703,7 @@ We’ll start with System 1: URL Shortener, then move one by one.
 
 1️⃣ URL Shortener System (like Bitly)
 Detailed Components & Flow
+```text
            ┌───────────────┐
            │    Client     │
            │ Web / Mobile  │
@@ -1722,6 +1740,8 @@ Detailed Components & Flow
            │ Prometheus /  │
            │ ELK / NewRelic│
            └───────────────┘
+```
+
 Flow:
 
 Client calls POST /shorten → API Gateway → Shortener Microservice
@@ -1747,6 +1767,7 @@ Awesome! 🔥 Let’s deep dive into System 2: Chat Application (like WhatsApp /
 
 2️⃣ Chat Application System
 Detailed Components & Flow
+```text
                 ┌───────────────┐
                 │     Client    │
                 │ Web / Mobile  │
@@ -1792,6 +1813,8 @@ Detailed Components & Flow
                  │ Prometheus /│
                  │ ELK / NewRelic│
                  └─────────────┘
+```
+
 Flow Explanation
 Client
 
@@ -1849,6 +1872,7 @@ I can move to System 3: E-Commerce Platform next with full detailed diagram like
 
 3️⃣ E-Commerce Platform System
 Detailed Components & Flow
+```text
                  ┌───────────────┐
                  │     Client    │
                  │ Web / Mobile  │
@@ -1898,6 +1922,8 @@ Detailed Components & Flow
  │ Prometheus /│
  │ ELK / NewRelic │
  └─────────────┘
+```
+
 Flow Explanation
 Client
 
@@ -1959,6 +1985,7 @@ If you want, we can move to System 4: Video Streaming Platform next** with the s
 
 4️⃣ Video Streaming Platform
 Detailed Components & Flow
+```text
                  ┌───────────────┐
                  │     Client    │
                  │ Web / Mobile  │
@@ -2008,6 +2035,8 @@ Detailed Components & Flow
  │ Prometheus /│
  │ ELK / NewRelic│
  └─────────────┘
+```
+
 Flow Explanation
 Client
 
@@ -2067,6 +2096,7 @@ If you want, we can move to System 5: Job Portal next with the same detailed, fu
 
 5️⃣ Job Portal System
 Detailed Components & Flow
+```text
                  ┌───────────────┐
                  │     Client    │
                  │ Web / Mobile  │
@@ -2115,6 +2145,8 @@ Detailed Components & Flow
  │ Prometheus /│
  │ ELK / NewRelic│
  └─────────────┘
+```
+
 Flow Explanation
 Client
 

@@ -2,6 +2,8 @@
 
 > **Source:** Extracted from `notes/All_chats.md` (Akamai SDE-II prep). Content preserved; reorganized into Concepts vs Interview sections.
 
+**How this file is laid out:** **Concepts** (definitions, ASCII + Mermaid, payment walkthrough) → **Interview** (**question bank** in tables, then **Answers** with `#### Qn` + **Answer** blocks). **ASCII** diagrams live in fenced *text* code blocks — use a wide editor or horizontal scroll. **Mermaid** diagrams render on GitHub and in many Markdown previews.
+
 ## Concepts
 
 > *Skim **At a glance** first — a short on-ramp. Below the line is the full chapter.*
@@ -27,160 +29,96 @@
 
 ### Microservice vs API vs job vs cron job
 
-The sections below break these down with examples and a comparison table.
+The subsections below define each term, then a **comparison table**, an **ASCII diagram** (monospace / wide terminal), and a short legend.
 
-1️⃣ Microservices
-Definition:
+#### 1. Microservices
 
-A microservice is a self-contained, independently deployable service that performs a specific business function.
+| | |
+|--|--|
+| **Definition** | A **microservice** is a self-contained, independently deployable unit that implements one business capability. Services talk over **APIs**, **queues**, or **messaging**. |
+| **Why it matters** | Each service can **own its data**, **scale**, and **fail** independently. |
 
-Microservices communicate with each other over APIs, queues, or messaging systems.
+**Examples**
 
-Key Points:
+- E-commerce: Catalog, Order, Payment, Recommendations.
+- Streaming: Upload, Transcode, Recommendations.
 
-Each service owns its database & logic.
+**Typical split**
 
-Highly scalable, deployable independently, and promotes loose coupling.
+- **Catalog MS** — product CRUD and search-facing data.
+- **Order MS** — cart/checkout and order lifecycle.
+- **Payment MS** — charges, PSP integration, payment state.
 
-Examples:
+#### 2. API (application programming interface)
 
-E-commerce: Catalog Service, Payment Service, Recommendation Service.
+| | |
+|--|--|
+| **Definition** | A **contract** between systems: REST, GraphQL, gRPC, etc. |
+| **Relation to MS** | **Microservice** = implementation; **API** = the **surface** clients and other services call. |
 
-Video Streaming: Transcoding Service, Recommendation Service, Upload Service.
+**Examples**
 
-Characteristics:
+```http
+GET /products          → list or search products
+POST /checkout         → place an order
+```
 
-Independent deployment
+**Analogy:** microservice = kitchen; API = menu + ordering counter.
 
-Own database (polyglot persistence possible)
+#### 3. Job (unit of work)
 
-Can fail independently without taking down the whole system
+| | |
+|--|--|
+| **Definition** | A **job** is a unit of work: one-shot, event-triggered, or scheduled. Often **async** or **batch**. |
+| **Examples** | Daily sales report; fan-out emails; video transcoding after upload. |
 
-Example:
+**Pseudo-code**
 
-Catalog Microservice → Handles product data (CRUD)
-Order Microservice → Handles order creation & transactions
-Payment Microservice → Handles payment processing
-2️⃣ API (Application Programming Interface)
-Definition:
-
-An API is a contract / interface through which one service or application communicates with another.
-
-It can be REST, GraphQL, gRPC, SOAP, etc.
-
-Key Points:
-
-APIs expose functionality, not the implementation.
-
-Microservices usually expose APIs to allow other services or clients to use them.
-
-Examples:
-
-GET /products → Fetch product list
-
-POST /checkout → Place an order
-
-Relation to Microservices:
-
-Microservice = implementation of business logic
-
-API = access point to that microservice
-
-Analogy:
-
-Microservice = a chef who cooks
-
-API = the menu through which customers order
-
-3️⃣ Job
-Definition:
-
-A job is a unit of work that runs on-demand or scheduled. It may be long-running or background.
-
-Often used for batch processing, report generation, or async tasks.
-
-Key Points:
-
-Can be executed once, periodically, or triggered by an event.
-
-May interact with databases, APIs, or other microservices.
-
-Examples:
-
-Daily report generation (generate_daily_sales_report)
-
-Sending email notifications for new job postings
-
-Video transcoding after upload
-
-Example in pseudo-code:
-
+```python
 def send_daily_email_report():
     users = get_all_users()
     for user in users:
         send_email(user)
-4️⃣ Cron Job
-Definition:
+```
 
-A cron job is a scheduled job that runs automatically at specific intervals.
+#### 4. Cron job (scheduled job)
 
-“Cron” comes from the Unix/Linux cron scheduler.
+| | |
+|--|--|
+| **Definition** | A **cron job** is a job triggered by a **time schedule** (Unix `cron` or managed scheduler). |
+| **Examples** | Nightly backup; every-15-min temp cleanup; weekly newsletter. |
 
-Key Points:
+**Example expressions**
 
-Uses time-based scheduling (minutes, hours, days, months, weekdays).
+```cron
+0 0 * * *       /backup/db.sh              # daily at midnight
+*/15 * * * *    /scripts/clean_temp_files.sh
+0 2 * * 1       python send_weekly_newsletter.py   # Mondays 02:00
+```
 
-Commonly used for maintenance, batch processing, or recurring jobs.
+#### Comparison
 
-Examples:
+| Concept | Runs on | Role | Typical trigger |
+|--------|---------|------|------------------|
+| **Microservice** | Containers / VMs | Business logic + data | API call, events |
+| **API** | Inside a service | Contract / access surface | HTTP, gRPC |
+| **Job** | Workers / queue | Async or batch work | Event, API, schedule |
+| **Cron job** | OS / scheduler | **Scheduled** variant of a job | Cron expression |
 
-0 0 * * * /backup/db.sh → Backup DB daily at midnight
+#### Real-world slice (e-commerce)
 
-*/15 * * * * /scripts/clean_temp_files.sh → Run every 15 minutes
+| Layer | Example |
+|-------|---------|
+| **Microservice** | Order service validates inventory and creates orders. |
+| **API** | `POST /orders` exposes that behavior to web and mobile. |
+| **Job** | `daily_sales_job` aggregates orders for reporting. |
+| **Cron** | Schedule `daily_sales_job` at **00:00** every day. |
 
-Analogy:
+#### ASCII diagram — microservices → APIs → jobs → cron
 
-Cron job = alarm clock that triggers a job at a scheduled time
+Use a **wide editor** or horizontal scroll; this is the same structure as before, just fenced so it stays monospace.
 
-Example Cron Expression:
-
-0 2 * * 1 python send_weekly_newsletter.py
-# Runs every Monday at 2:00 AM
-📌 Comparison Table
-Concept	Runs on	Purpose / Function	Trigger	Relation
-Microservice	Server / container	Encapsulates business functionality	API request / events	Exposes API, may run jobs
-API	Microservice / app	Interface to access functionality	HTTP/gRPC call	Exposed by microservice
-Job	Background worker / scheduler	Unit of work, can be async or batch	On-demand / event / schedule	May call APIs or microservices
-Cron Job	OS Scheduler / container	Scheduled job with time-based triggers	Time schedule	Specific type of job
-💡 Real-World Example: E-Commerce Platform
-Microservice:
-
-Order Service → handles order creation, validates inventory.
-
-API:
-
-POST /orders → exposes functionality of Order Service to clients.
-
-Job:
-
-Generate daily sales report (daily_sales_job) → fetches all orders, computes totals.
-
-Cron Job:
-
-Schedule daily_sales_job to run every midnight using cron.
-
-✅ Key Takeaways:
-
-Microservice = logic + data + deployment
-
-API = access point / contract
-
-Job = task / unit of work
-
-Cron Job = scheduled job
-
-
-📊 Microservices → APIs → Jobs → Cron Jobs Flow
+```text
                             ┌──────────────────────┐
                             │      Client / UI      │
                             └─────────┬────────────┘
@@ -221,138 +159,126 @@ Cron Job = scheduled job
 │ Cron Job      │   │ Cron Job      │    │ Cron Job          │
 │ Daily Report  │   │ Rebuild Index │    │ Reset Daily Sales │
 └───────────────┘   └───────────────┘    └──────────────────┘
-Explanation
-Client / UI
+```
 
-Makes requests like POST /orders or GET /products.
+##### Legend (same flow in words)
 
-API Layer
+- **Client / UI** — `POST /orders`, `GET /products`, etc.
+- **API layer** — routes to the right microservice; auth and rate limits often live on a **gateway** here.
+- **Microservices** — Catalog, Order, Payment (each with DB/cache).
+- **Background queues** — email, search index, inventory updates off the hot request path.
+- **Cron** — pushes work into those queues on a schedule (reports, reindex, daily resets).
 
-Exposes REST / GraphQL endpoints for each microservice.
+##### Interview one-liners
 
-Acts as a contract between client and backend services.
+- **Microservice** = **independently deployable** business capability (often with its own DB).
+- **API** = **how** others call that capability.
+- **Job** = **unit of work** (async / batch / long-running).
+- **Cron job** = job with a **clock** trigger.
 
-Microservices (MS)
+> **If asked:** “What if a cron job fails?” → Retries with backoff, **dead-letter** path, **alerts**, and **idempotent** job design so a safe re-run does not double-charge or double-send.
 
-Catalog MS → Manages products and categories.
+> **Original prompt (from chat export):** Walk through what happens from “Pay” through persistence, PSP, Kafka, notifications, and ops — step by step.
 
-Order MS → Handles order creation and validation.
+Below is the same material, **reformatted**: numbered steps, **JSON in code fences**, and a **Mermaid** sequence you can paste into [Mermaid Live](https://mermaid.live).
 
-Payment MS → Handles payment processing, validation, and transaction logs.
+### E-commerce payment flow — detailed walkthrough
 
-Database & Cache
+**Scenario:** user clicks **Pay** on an order.
 
-Each MS can have its own DB or share read replicas.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User / client
+    participant G as API Gateway
+    participant P as Payment MS
+    participant D as Payment / Order DB
+    participant PSP as Payment provider
+    participant K as Kafka
+    participant I as Inventory svc
+    participant N as Notification svc
+    participant A as Analytics
+    U->>G: POST /api/payment (orderId, amount, idempotency key)
+    G->>G: Auth (JWT/OAuth), rate limit, route
+    G->>P: Forward request
+    P->>D: Validate order exists, amount, not already paid
+    alt validation fails
+        P-->>U: 4xx error
+    else ok
+        P->>D: BEGIN TX — insert payment PENDING, order payment_processing
+        P->>PSP: Charge (tokenized instrument)
+        PSP-->>P: success / failure / pending
+        P->>D: Update payment + order status, COMMIT
+        P->>K: Publish payment_completed (key=orderId)
+        K-->>I: consume — deduct stock (idempotent)
+        K-->>N: consume — email/SMS/push
+        K-->>A: consume — analytics / DWH
+        P-->>U: 200 JSON success (or async "processing" if PSP pending)
+    end
+```
 
-Redis or Memcached for caching hot data (products, orders).
+#### Step 1 — Client → API gateway
 
-Background Job Queues
+Client sends something like:
 
-Jobs like sending emails, updating search indices, inventory updates are queued asynchronously.
-
-Decouples slow/long tasks from API response, improving performance.
-
-Cron Jobs
-
-Scheduled jobs for recurring tasks like:
-
-Daily report generation
-
-Rebuilding search indices nightly
-
-Resetting daily counters / sales metrics
-
-Trigger jobs into the job queue for processing.
-
-💡 Key Interview Takeaways
-Microservices = Independent business logic
-
-API = Access point for microservices
-
-Job = Any background task (async, triggered by event or API)
-
-Cron Job = Scheduled job that triggers jobs automatically
-
-Pro Tip:
-
-If asked in an interview: “What happens when a cron job fails?” → Answer:
-
-Use retry policy, dead-letter queues, and monitoring/alerts for failures.
-
-
-Now please tell me how a transaction proceed from user enter on pay to entering data to sending notificaion each and every small thing happen
-
-
-I’ll explain it step by step with system design, databases, microservices, Kafka, and monitoring.
-
-Scenario: E-Commerce Payment Flow
-User: clicks Pay Now on an order.
-
-Step 1: User Initiates Payment (Client → API Gateway)
-Client sends a request:
-
+```http
 POST /api/payment
+Content-Type: application/json
+```
+
+```json
 {
-   "orderId": "12345",
-   "userId": "U1001",
-   "paymentMethod": "CreditCard",
-   "amount": 499.99
+  "orderId": "12345",
+  "userId": "U1001",
+  "paymentMethod": "CreditCard",
+  "amount": 499.99
 }
-API Gateway:
+```
 
-Receives request
+**Gateway:** authenticates (JWT/OAuth), rate-limits, routes to **Payment MS**.
 
-Authenticates user via JWT / OAuth
+#### Step 2 — Payment MS validates the order
 
-Performs rate limiting & forwards request to Payment Microservice
+- Order exists and is not already paid (Orders DB).
+- Amount matches order total.
+- Optional: inventory still available (or reservation valid).
 
-Step 2: Payment Microservice Validates Order
-Payment MS checks:
+If validation fails → return a **4xx** to the client.
 
-Order exists and is not already paid (DB lookup in Orders DB)
+#### Step 3 — DB transaction (ACID)
 
-Amount matches order total
+In **Postgres** (or similar), open a transaction:
 
-Inventory availability (optional)
+- Insert **Payments** row: `paymentId`, `orderId`, `userId`, `amount`, `status = pending`.
+- Update **Orders**: e.g. `payment_processing`.
 
-If validation fails → return error to user
+Use an isolation level appropriate to your policy (**REPEATABLE READ** / **SERIALIZABLE** or explicit row locks) to reduce **double-pay** races.
 
-Step 3: Initiate Transaction (DB + ACID)
-Begin database transaction in Payment DB (SQL / Postgres):
+#### Step 4 — Call the PSP (Stripe, Razorpay, PayPal, …)
 
-Insert record in Payments Table:
+Never send raw PAN; use **tokens** from the provider.
 
-paymentId, orderId, userId, amount, status = pending
-
-Update Order Table: status = payment_processing
-
-Important:
-
-Use transaction isolation level = SERIALIZABLE or at least REPEATABLE READ to avoid double payment or race conditions.
-
-Lock rows as needed for the order.
-
-Step 4: Call Payment Gateway / External Processor
-Payment MS sends request to external payment provider (Stripe, Razorpay, PayPal):
-
+```json
 {
   "amount": 499.99,
   "currency": "USD",
   "cardInfo": "tokenized",
   "orderId": "12345"
 }
-Response received: success / failure / pending
+```
 
-Step 5: Update Payment Status
-Within the same transaction or a follow-up transaction:
+Response: **success**, **failure**, or **pending** (async PSP).
 
-If success → Payments.status = completed, Orders.status = paid
+#### Step 5 — Persist PSP outcome
 
-If failure → Payments.status = failed, rollback inventory hold
+In the same transaction or a carefully ordered follow-up:
 
-Step 6: Publish Event to Kafka
-Payment MS publishes an event to Kafka topic: payment_completed
+- **Success** → `Payments.status = completed`, `Orders.status = paid` (or equivalent).
+- **Failure** → `Payments.status = failed`; release inventory reservation if your design uses one.
 
+#### Step 6 — Publish `payment_completed` to Kafka
+
+```json
 {
   "orderId": "12345",
   "paymentId": "P56789",
@@ -361,114 +287,74 @@ Payment MS publishes an event to Kafka topic: payment_completed
   "status": "completed",
   "timestamp": "2026-03-21T12:00:00Z"
 }
-Kafka ensures durable storage, partitioned by orderId key → preserves ordering.
+```
 
-Step 7: Consumer Microservices Trigger Actions
-Inventory Service
+Partition by **`orderId`** (or `paymentId` policy you document) so **ordering** holds per order.
 
-Listens to payment_completed topic
+#### Step 7 — Consumers (async side effects)
 
-Deducts items from stock
+| Consumer | Action |
+|----------|--------|
+| **Inventory** | Deduct stock; idempotent on `paymentId` / `eventId`. |
+| **Notification** | Email / SMS / push. |
+| **Order / analytics** | Audit trail, dashboards, DWH. |
 
-Updates DB → inventory consistency
+Retries + **DLQ** for poison messages; consumers must be **idempotent** (at-least-once delivery).
 
-Notification Service
+#### Step 8 — Background jobs / cron
 
-Listens to payment_completed
+Examples: invoice PDF, loyalty points, finance extracts to **Snowflake / Redshift**.
 
-Sends email / SMS / push notification to user
+#### Step 9 — Cache & monitoring
 
-Order Service / Analytics Service
+- **Redis:** hot reads — recent orders, payment status for `GET` polling.
+- **Metrics:** latency, errors, PSP timeouts, **consumer lag**, DB slow queries.
+- **Logs/traces:** correlation id from gateway across MS + Kafka handlers.
 
-Logs transaction for analytics, reporting, or dashboard
+#### Step 10 — HTTP response to client
 
-Consumers can have retry mechanism and DLQ for failures
-
-Step 8: Async Jobs / Cron Jobs
-Background tasks may include:
-
-Sending invoice PDF to email
-
-Generating loyalty points
-
-Updating financial reporting DB / Snowflake / Redshift
-
-Step 9: Update Cache & Monitoring
-Redis Cache updates:
-
-User’s recent orders
-
-Payment status cache for fast API response
-
-Monitoring systems track:
-
-Payment latency
-
-Kafka consumer lag
-
-DB transaction failures
-
-Error alerts
-
-Step 10: Client Response
-Payment MS returns HTTP response to client:
-
+```json
 {
   "status": "success",
   "orderId": "12345",
   "paymentId": "P56789",
   "message": "Payment successful!"
 }
-Client shows confirmation to user
+```
 
-Step 11: Full Observability
-Logs & Metrics:
+#### Step 11 — Observability & alerts
 
-API request logs → ElasticSearch / Kibana
+| Signal | Tooling (examples) |
+|--------|-------------------|
+| API logs | ELK, CloudWatch, Datadog |
+| Kafka lag | Burrow, broker metrics, Grafana |
+| DB | slow query log, lock waits |
+| Alerts | error rate, lag SLO, PSP failure spike |
 
-Kafka metrics → consumer lag, throughput
+##### Linear flow (text)
 
-DB metrics → slow queries, locks
+```text
+User → Client → API Gateway → Payment MS → DB → PSP
+Payment MS → Kafka → Inventory / Notification / Analytics
+Notification → Email/SMS → User
+Jobs → Invoice / loyalty / reports
+Observability → metrics + traces + logs → alerts
+```
 
-Monitoring dashboard → Prometheus / Grafana
+##### SDE-2 talking points (quick list)
 
-Alerting:
+- **Transactional safety:** DB boundaries + isolation vs **double payment**.
+- **Async decoupling:** Kafka for fan-out without blocking the HTTP path.
+- **Retries & DLQ:** don’t lose work; surface poison pills.
+- **Idempotency:** API keys + consumer dedupe.
+- **Caching:** Redis for read-heavy status.
+- **Scale:** partitions × consumer groups; stateless app tier.
 
-Payment failures > threshold → alert Ops team
+> **One-line chain:** `Client → API → Payment MS → DB → PSP → Kafka → Inventory / Notification → jobs → metrics/traces`.
 
-Consumer lag exceeds limit → alert SRE
+### Payment transaction — ASCII map (standard)
 
-Sequence Diagram (Simplified)
-User → Client → API Gateway → Payment MS → DB → Payment Gateway
-Payment MS → Kafka Topic → Inventory MS / Notification MS / Analytics MS
-Notification MS → Email/SMS → User
-Background Jobs → Invoice / Reports / Loyalty
-Monitoring → Prometheus / Grafana / Alerts
-Key SDE-2 Talking Points for Interviews
-Transactional Safety: Use DB transactions + proper isolation levels → avoid double payments.
-
-Async decoupling: Kafka ensures payment event triggers multiple services without blocking user request.
-
-Retries & DLQ: Failed notifications or inventory updates don’t crash the flow.
-
-Idempotency: Consumers must handle duplicate events from Kafka.
-
-Monitoring: End-to-end observability for latency, failures, and retries.
-
-Caching: Use Redis for recent orders / payment status → fast reads, reduce DB load.
-
-Scaling: Kafka partitions → multiple consumers → high throughput processing.
-
-
-Client → API → Payment MS → DB → Kafka → Inventory / Notification → Jobs → Monitoring
-
-It’ll be interview-ready and perfect to explain step by step.
-
-
-yes full detailed
-
-
-Payment Transaction System Design
+```text
                            ┌───────────────┐
                            │     User      │
                            │ Web / Mobile  │
@@ -529,88 +415,36 @@ Payment Transaction System Design
  │ Grafana /   │
  │ ELK / Alerts│
  └─────────────┘
-Flow Explanation (Step-by-Step)
-User → API Gateway
+```
 
-Sends payment request
+### Flow explanation (step-by-step) — matches the ASCII map above
 
-JWT/OAuth authentication & rate limiting
+| Step | What happens |
+|------|----------------|
+| **User → API gateway** | `POST` payment; JWT/OAuth; rate limit; route to Payment MS. |
+| **Payment MS → validation** | Order exists; amount OK; begin DB tx (Payments + Orders). |
+| **Payment MS → PSP** | Charge tokenized instrument; success / fail / pending. |
+| **Payment MS → DB** | Commit status (completed / failed). |
+| **Payment MS → Kafka** | `payment_completed`; partition key = `orderId`. |
+| **Kafka → consumers** | Inventory (stock), Notification (email/SMS), Analytics (DWH). |
+| **Retries / DLQ** | Transient → retry topic; poison → DLQ + human triage. |
+| **Jobs / cron** | Invoice PDF, loyalty, scheduled finance extracts. |
+| **Redis** | Hot reads: order/payment status for polling clients. |
+| **Monitoring** | Latency, errors, consumer lag, DB health; alert on SLO breach. |
+| **Response** | Final JSON to client; user sees confirmation (or “processing” if PSP async). |
 
-API Gateway → Payment MS
+#### SDE-2 interview bullets (this diagram)
 
-Validates order and payment amount
-
-Initiates DB transaction (Payments + Orders)
-
-Payment MS → External Payment Gateway
-
-Processes credit card / UPI / wallet
-
-Returns success/failure
-
-Payment MS → Payment DB
-
-Updates status = completed or failed
-
-Commit transaction
-
-Payment MS → Kafka
-
-Publishes payment_completed event to topic
-
-Key = orderId → ensures ordering
-
-Kafka → Consumers
-
-Inventory MS → Deduct stock
-
-Notification MS → Email/SMS push
-
-Analytics MS → Update reporting DB / data warehouse
-
-Retries & Dead-Letter Queue
-
-Failed messages → payment_retry
-
-Permanently failed → payment_dlq for manual handling
-
-Background Jobs / Cron
-
-Generate invoice PDFs
-
-Update loyalty points
-
-Daily reports
-
-Cache Update
-
-Redis stores recent orders & payment status for fast API response
-
-Monitoring
-
-Track latency, transaction failures, Kafka consumer lag, DB locks
-
-Alerts via Grafana / Prometheus / ELK
-
-Response to Client
-
-Returns final payment status → user sees confirmation
-
-SDE-2 Interview Key Points
-Transaction safety: DB transaction ensures ACID (no double payment)
-
-Async decoupling: Kafka decouples Payment → Inventory / Notifications / Analytics
-
-Retry & DLQ: Ensures no lost messages
-
-Idempotency: Consumers handle duplicate events
-
-Monitoring & observability: Critical for end-to-end pipeline
-
-Caching: Redis → reduces DB load and improves response
+- **Transaction safety:** ACID on the payment path; no double-settle without idempotency.
+- **Async decoupling:** Kafka fans out without blocking HTTP.
+- **Retry & DLQ:** no silent loss; poison messages surfaced.
+- **Idempotency:** consumers tolerate duplicate delivery.
+- **Observability + cache:** same as the detailed walkthrough above.
 
 
-Enterprise-Grade Payment Transaction Flow
+### Enterprise-grade payment flow — ASCII map
+
+```text
                             ┌───────────────┐
                             │     User      │
                             │ Web / Mobile  │
@@ -673,104 +507,39 @@ Enterprise-Grade Payment Transaction Flow
             │ Grafana /   │
             │ ELK / Alerts│
             └─────────────┘
-Enterprise-Level Enhancements
-Multi-Region DB & Kafka
+```
 
-DB clusters replicated across regions → disaster recovery
+### Enterprise-level enhancements
 
-Kafka brokers in multi-region cluster → failover
+| Theme | What to say |
+|-------|-------------|
+| **Multi-region DB & Kafka** | Replicated DB and brokers for **DR** and failover. |
+| **Delivery semantics** | “Exactly-once” in practice → **idempotent** producers/consumers + dedupe; know the tradeoffs. |
+| **Retry & DLQ** | Transient → retry with backoff; permanent → **DLQ** + runbook. |
+| **Caching** | Redis for hot **order/payment** reads; watch invalidation. |
+| **Async boundaries** | Inventory, notification, analytics **off** the synchronous pay path. |
+| **Jobs / cron** | Invoice, loyalty, finance extracts — **scheduled** off critical path. |
+| **Observability** | Metrics (lag, latency), logs, traces, **alerts** on SLOs. |
+| **Fault tolerance** | Kafka replication; DB HA — **no single broker** story. |
 
-Exactly-Once Semantics
+#### Enterprise flow (same as standard path, louder ops)
 
-Idempotent producers + transactional Kafka consumer → prevents duplicate events
+1. Pay → gateway → Payment MS → **ACID** local transaction → PSP.  
+2. Commit → **Kafka** `payment_completed` (keyed for order).  
+3. **Multi-region** consumers: inventory, notification, analytics.  
+4. Failures → **retry** → **DLQ**; jobs fill out invoice/loyalty/reporting.  
+5. **Redis** for hot reads; **dashboards** for lag and errors.
 
-Critical for payment systems
+#### SDE-2 / Akamai angles
 
-Retry & Dead-Letter Queues
+- End-to-end **event-driven** story + where **strong consistency** actually lives.  
+- **Idempotency** at API and consumer.  
+- **Horizontal scale:** partitions × consumer groups; **multi-region** DR.  
+- **Production hygiene:** metrics, logs, traces, **on-call** alerts.
 
-Transient failures → Retry topic
+### Master system design map — ASCII
 
-Permanent failures → DLQ → manual intervention
-
-Caching & Hot Data
-
-Redis cache for recent payments and order status
-
-Improves read performance for client apps
-
-Async Microservices
-
-Inventory, Notification, Analytics → decoupled from payment processing
-
-Kafka ensures durable, ordered event delivery
-
-Background Jobs
-
-Invoice generation, loyalty points, financial reports
-
-Cron jobs run daily/hourly → decoupled from main flow
-
-Monitoring & Observability
-
-Prometheus / Grafana: metrics like DB latency, Kafka lag, consumer health
-
-ELK Stack: logs & error tracking
-
-Alerts: failed transactions, under-replicated partitions, high consumer lag
-
-Fault Tolerance
-
-Replicated partitions in Kafka → no data loss if broker fails
-
-DB multi-region replication → no downtime if primary region fails
-
-Step-by-Step Enterprise Flow
-User clicks Pay → API Gateway → Payment MS
-
-Payment MS validates order → begins ACID transaction on DB
-
-Payment MS calls external payment gateway → receives result
-
-Payment MS commits DB transaction → updates order and payment status
-
-Payment MS publishes event to Kafka → partitioned by orderId key
-
-Kafka consumers in multiple regions read event:
-
-Inventory MS → deducts stock
-
-Notification MS → email/SMS/push
-
-Analytics MS → reporting / warehouse
-
-Failed messages → retry topic → DLQ if persistent failure
-
-Background jobs → invoices, loyalty points, daily reports
-
-Redis cache → updates recent payments & order status
-
-Monitoring → metrics, logs, alerts → ensures observability
-
-User receives final confirmation
-
-✅ SDE-2 / Akamai Interview Key Points
-
-Show understanding of end-to-end event-driven architecture
-
-Explain transaction safety, exactly-once delivery, retries, and DLQs
-
-Discuss horizontal scaling with Kafka partitions & consumer groups
-
-Discuss multi-region replication for disaster recovery
-
-Include monitoring & observability → critical for production-grade systems
-
-Explain idempotency and handling duplicates
-
-
-This will be one big diagram with detailed flows, showing how everything connects end-to-end.
-
-Master System Design Map
+```text
                                ┌───────────────┐
                                │     User      │
                                │ Web / Mobile  │
@@ -816,108 +585,28 @@ Master System Design Map
  │ Prometheus  │   │ Elastic /    │ │ Jenkins / Argo │ │ AWS/GCP    │
  │ Grafana / ELK│ │ Splunk      │ │ Docker / K8s   │ │ Multi-Region│
  └─────────────┘   └─────────────┘ └─────────────┘    └─────────────┘
-Explanation of Components
-Users & API Gateway
+```
 
-Centralized entry point for web/mobile
+### Explanation of components (master map)
 
-Handles OAuth authentication, rate limiting, routing
+| Area | Role in the diagram |
+|------|---------------------|
+| **Users & API gateway** | Single entry: **OAuth**, **rate limits**, routing to services. |
+| **Microservices** | **Payment** (PSP + Kafka out), **Order** (lifecycle), **Inventory** (stock), **Job/scheduler** (cron-driven work). |
+| **Data stores** | **Regional** OLTP for payments; **Redis** hot reads; **warehouse** for analytics. |
+| **Kafka** | Topics like `payment_completed`, consumer groups, **retry/DLQ** sidecars. |
+| **Ops** | **Metrics/logs**, **CI/CD**, **multi-region** cloud footprint. |
 
-Microservices
+#### Interview checklist (map-sized)
 
-Payment MS: handles transactions, calls payment gateways, publishes Kafka events
+- **Event-driven** fan-out vs **sync** PSP call.  
+- **ACID** where money moves; **idempotent** consumers.  
+- **Retries / DLQ**; **caching**; **deploy** story (K8s, envs).  
+- **DR**: multi-region **Kafka + DB**.
 
-Order MS: manages order states
+> **This map is a single canvas** tying payment flow, notifications, analytics, jobs, inventory, data stores, Kafka, cache, observability, pipelines, and cloud — useful for **end-to-end** SDE-2 answers.
 
-Inventory MS: deducts stock asynchronously
-
-Job MS: scheduled tasks, alerts, report generation
-
-Databases
-
-Multi-region ACID DB for payments
-
-NoSQL / cache (Redis) for fast reads
-
-Data warehouses for analytics (Snowflake / Redshift)
-
-Kafka Topics & Consumers
-
-Topics: payment_completed, order_created, alerts
-
-Consumer groups: Inventory, Notification, Analytics
-
-DLQ & Retry Topics for failure handling
-
-Caching
-
-Redis stores hot data: recent orders, payment status
-
-Background Jobs
-
-Cron jobs for invoice, loyalty points, reporting
-
-Monitoring & Logging
-
-Prometheus / Grafana: metrics
-
-ELK / Splunk: logs, error tracking, alerts
-
-CI/CD Pipelines
-
-Jenkins / Argo pipelines
-
-Docker + Kubernetes → containerized deployment
-
-Multi-environment: Dev, QA, Prod
-
-Cloud / Multi-Region
-
-AWS / GCP → highly available, scalable services
-
-Multi-region Kafka cluster → disaster recovery
-
-Multi-region DB clusters → fault-tolerant
-
-Key Interview Points to Discuss
-Event-driven Architecture: Async decoupling with Kafka → scalable and resilient
-
-Transactions: ACID for payment, idempotency for consumers
-
-Retries & DLQ: Failures handled without blocking main pipeline
-
-Monitoring: Metrics, logs, alerts → SRE-ready design
-
-Caching: Redis → improves read latency
-
-CI/CD + Containers: Deployment strategy for microservices
-
-Cloud Scaling: Multi-region replication for DR and fault tolerance
-
-💡 This Master Map covers:
-
-Payment Flow, Notification, Analytics, Jobs, Inventory
-
-DB, Kafka, Caching, Monitoring, CI/CD, Cloud
-
-Async & sync flows, retries, DLQ, observability
-
-This is literally a full Akamai-level SDE-2 system design interview answer.
-
-
-Kafka
-
-Microservices
-
-DB transactions & isolation
-
-CI/CD & DevOps
-
-Security / Auth
-
-System design
-
-…all linked to this master system diagram so you can practice hardcore interview prep.
+**Topic coverage:** Kafka · microservices · DB transactions & isolation · CI/CD & DevOps · security/auth · system design (all anchored to the diagram above).
 
 #### Patterns & edge cases
 
@@ -944,173 +633,139 @@ System design
 
 ## Interview questions, mocks & scenarios
 
+Use the **question bank** below for quick drills (tables = one screen per topic). **Answers** start in the next section — each **`#### Qn`** is the question; **`Answer`** is the talk track.
+
+### Question bank — Topic A · Microservices & API design
+
+| # | Question |
+|---|----------|
+| 1 | Explain how Payment MS, Order MS, Inventory MS, and Notification MS interact. |
+| 2 | How would you ensure idempotency for repeated payment requests? |
+| 3 | Explain synchronous vs asynchronous communication in this system. Which services use sync vs async? |
+| 4 | How would you scale Payment MS horizontally for high traffic? |
+| 5 | How would you design API versioning for backward compatibility? |
+| 6 | How do you handle partial failures in multi-service transactions? |
+| 7 | Explain the circuit breaker pattern for payment gateway failures. |
+| 8 | How would you monitor API latency and failures per service? |
+| 9 | How would you design rate limiting per user / service? |
+| 10 | How would you handle large payloads (order + payment + metadata)? |
+
+> **Hint (topic A):** Event-driven via Kafka; decoupled async flow.
+
+### Question bank — Topic B · Database & transactions
+
+| # | Question |
+|---|----------|
+| 11 | Explain ACID in the Payment DB. Why SERIALIZABLE vs REPEATABLE READ? |
+| 12 | How would you handle double payment / race conditions? |
+| 13 | How would you scale Order DB for read-heavy workloads? |
+| 14 | When would you use Redis vs SQL? |
+| 15 | Explain multi-region DB replication and failover. |
+| 16 | How would you implement eventual consistency across microservices? |
+| 17 | How do transaction isolation levels affect performance? |
+| 18 | Why Snowflake / Redshift for analytics vs the Payment DB? |
+| 19 | How would you implement audit logs for payment transactions? |
+| 20 | How would you archive old payment data without hurting queries? |
+
+### Question bank — Topic C · Kafka & event-driven architecture
+
+| # | Question |
+|---|----------|
+| 21 | Explain Kafka partitioning and ordering guarantees. |
+| 22 | How does Kafka achieve high availability? |
+| 23 | What are exactly-once, at-least-once, at-most-once semantics? |
+| 24 | How would you reprocess failed messages? |
+| 25 | How would you design retry topics and DLQs? |
+| 26 | How would you monitor Kafka consumer lag and throughput? |
+| 27 | How would you scale Kafka consumers horizontally? |
+| 28 | How would you handle multi-region Kafka replication? |
+| 29 | How do you ensure idempotent processing in consumers? |
+| 30 | How would you design topic naming / partitioning across apps? |
+
+### Question bank — Topic D · Authentication & security
+
+| # | Question |
+|---|----------|
+| 31 | How would you implement OAuth / JWT at the API gateway? |
+| 32 | How would SAML SSO work for enterprise users? |
+| 33 | How would you secure microservices communication internally? |
+| 34 | How would you protect Kafka topics from unauthorized access? |
+| 35 | How would you encrypt sensitive data at rest and in transit? |
+| 36 | How would you implement RBAC in this system? |
+| 37 | How do you prevent replay attacks for payment APIs? |
+| 38 | How would you secure Redis? |
+
+### Question bank — Topic E · DevOps, CI/CD & monitoring
+
+| # | Question |
+|---|----------|
+| 39 | How would you implement CI/CD for multiple microservices? |
+| 40 | How would you deploy with zero downtime? |
+| 41 | How would you use Docker + Kubernetes here? |
+| 42 | How would you implement blue-green or canary deployments? |
+| 43 | How would you monitor Kubernetes clusters? |
+| 44 | How would you alert on high DB latency or consumer lag? |
+| 45 | How would you log errors and metrics for troubleshooting? |
+| 46 | How would you roll back a failed deployment safely? |
+| 47 | How would you automate scaling based on traffic? |
+| 48 | How would you handle CI/CD secrets (gateway keys, DB creds)? |
+
+### Question bank — Topic F · System design & architecture
+
+| # | Question |
+|---|----------|
+| 49 | How would you design fault-tolerant multi-region architecture? |
+| 50 | How would you handle millions of concurrent payment requests? |
+| 51 | How would you ensure eventual consistency across microservices? |
+| 52 | How would you handle dead-letter events for failed notifications? |
+| 53 | How would you integrate monitoring, logging, and alerting in production? |
+| 54 | How would you optimize end-to-end latency (User → API → Kafka → consumers)? |
+| 55 | How would you design data pipelines for analytics / reporting? |
+| 56 | How would you handle traffic spikes (e.g. Black Friday) without losing events? |
+| 57 | How would you implement distributed tracing across services? |
+| 58 | How would you prevent duplicate payments in distributed systems? |
+
+### Cross-topic hints
+
+- Tie answers to **Kafka**, **DB transactions**, **ACID vs eventual** where relevant.  
+- Mention **retries**, **DLQs**, **idempotency**, **multi-region DR**, **metrics/traces/alerts**, and **security** defaults.
+
+
+## Answers (full mock bank)
+
+> Use **Q** headings for scanning; **Answer** blocks are the talk-track bullets you can say aloud.
 
-I’ll also provide key hints / talking points / answers so you can practice hardcore for SDE-2.
+### Topic A — Microservices & API design
 
-Akamai-Level Mock Interview Grilling Sheet (50+ Questions)
-1️⃣ Microservices & API Design
-Explain how Payment MS, Order MS, Inventory MS, and Notification MS interact.
+#### Q1 — How Payment MS, Order MS, Inventory MS, Notification MS interact?
 
-Hint: Event-driven via Kafka; decoupled async flow.
+**Answer**
 
-How would you ensure idempotency for repeated payment requests?
+Payment MS publishes events to Kafka (payment_completed) → Inventory MS deducts stock, Notification MS sends email/push, Order MS updates order status asynchronously. Decoupled, async, event-driven.
 
-Explain synchronous vs asynchronous communication in this system.
+---
 
-Which services use sync? Which use async?
+#### Q2 — Idempotency for repeated payment requests?
 
-How would you scale Payment MS horizontally for high traffic?
+**Answer**
 
-How would you design API versioning for backward compatibility?
+Use paymentIdempotencyKey per request stored in DB / cache. Check before processing to avoid double payments.
 
-How do you handle partial failures in multi-service transactions?
+---
 
-Explain circuit breaker pattern in this system.
+#### Q3 — Sync vs async communication?
 
-For Payment Gateway failures.
-
-How would you monitor API latency and failures per service?
-
-How would you design rate limiting per user / service?
-
-How would you handle large payloads (order + payment + metadata)?
-
-2️⃣ Database & Transactions
-Explain ACID transaction in Payment DB. Why use SERIALIZABLE vs REPEATABLE READ?
-
-How would you handle double payment / race conditions?
-
-How would you scale Order DB for read-heavy workloads?
-
-When would you use Redis cache vs SQL DB?
-
-Explain multi-region DB replication and failover.
-
-How would you implement eventual consistency across microservices?
-
-How do transaction isolation levels affect performance?
-
-Why choose Snowflake / Redshift for analytics vs Payment DB?
-
-How would you implement audit logs for payment transactions?
-
-How would you archive old payment data without affecting queries?
-
-3️⃣ Kafka / Event-Driven Architecture
-Explain Kafka partitioning and how it ensures ordering.
-
-How does Kafka achieve high availability?
-
-What are exactly-once, at-least-once, at-most-once semantics?
-
-How would you reprocess failed messages?
-
-How would you design retry topics and DLQs?
-
-How would you monitor Kafka consumer lag and throughput?
-
-How would you scale Kafka consumers horizontally?
-
-How would you handle multi-region Kafka replication?
-
-How do you ensure idempotent processing in consumers?
-
-How would you design Kafka topic naming / partitioning strategy for multiple apps?
-
-4️⃣ Authentication & Security
-How would you implement OAuth / JWT authentication in API Gateway?
-
-How would SAML SSO work for enterprise users?
-
-How would you secure microservices communication internally?
-
-How would you protect Kafka topics from unauthorized access?
-
-How would you encrypt sensitive data (payments, user info) at rest & in transit?
-
-How would you implement role-based access control (RBAC) in this system?
-
-How do you prevent replay attacks for payment APIs?
-
-How would you secure Redis cache?
-
-5️⃣ DevOps / CI/CD / Monitoring
-How would you implement CI/CD pipelines for multiple microservices?
-
-How would you deploy services with zero downtime?
-
-How would you use Docker + Kubernetes in this system?
-
-How would you implement blue-green or canary deployments?
-
-How would you monitor Kubernetes clusters?
-
-How would you alert on high DB latency or consumer lag?
-
-How would you log errors and metrics for troubleshooting?
-
-How would you roll back a failed deployment safely?
-
-How would you automate scaling based on traffic?
-
-How would you handle CI/CD secrets (payment gateway keys, DB creds)?
-
-6️⃣ System Design & Architecture
-How would you design fault-tolerant multi-region architecture?
-
-How would you handle millions of concurrent payment requests?
-
-How would you ensure eventual consistency across all microservices?
-
-How would you handle dead-letter events for failed notifications?
-
-How would you integrate monitoring, logging, and alerting in production?
-
-How would you optimize latency end-to-end (User → API → Kafka → Consumers)?
-
-How would you design data pipelines for analytics / reporting?
-
-How would you handle large spikes (Black Friday) without losing events?
-
-How would you implement distributed tracing for debugging multi-service flow?
-
-How would you prevent duplicate payments in distributed systems?
-
-✅ Key Hints / Talking Points
-Always reference Kafka, DB transactions, ACID vs eventual consistency
-
-Discuss consumer retries, DLQs, idempotency
-
-Emphasize async decoupling for scaling & fault tolerance
-
-Talk about multi-region replication and disaster recovery
-
-Reference monitoring, metrics, alerts, and tracing
-
-Always highlight security/auth best practices
-
-This sheet covers almost all SDE-2 / Akamai-level interview topics and directly ties to our Master System Design Map.
-
-
-asnwer all too
-
-
-1️⃣ Microservices & API Design
-Q1: How Payment MS, Order MS, Inventory MS, Notification MS interact?
-
-Answer: Payment MS publishes events to Kafka (payment_completed) → Inventory MS deducts stock, Notification MS sends email/push, Order MS updates order status asynchronously. Decoupled, async, event-driven.
-
-Q2: Idempotency for repeated payment requests?
-
-Answer: Use paymentIdempotencyKey per request stored in DB / cache. Check before processing to avoid double payments.
-
-Q3: Sync vs async communication?
+**Answer**
 
 Sync: Payment → Payment Gateway for authorization
 
 Async: Payment → Kafka → Inventory/Notification/Analytics
 
-Q4: Scaling Payment MS?
+---
+
+#### Q4 — Scaling Payment MS?
+
+**Answer**
 
 Horizontal scaling: multiple instances behind load balancer
 
@@ -1118,109 +773,188 @@ Stateless microservices → scale easily
 
 DB bottleneck → sharding or read replicas
 
-Q5: API versioning?
+---
+
+#### Q5 — API versioning?
+
+**Answer**
 
 Use URI versioning (/v1/payments) or header versioning
 
 Maintain backward compatibility
 
-Q6: Partial failures in multi-service transactions?
+---
+
+#### Q6 — Partial failures in multi-service transactions?
+
+**Answer**
 
 Use sagas pattern → orchestrated rollback compensations
 
 Or async events + retries / DLQ
 
-Q7: Circuit breaker pattern?
+---
+
+#### Q7 — Circuit breaker pattern?
+
+**Answer**
 
 Wrap calls to payment gateway → prevent cascading failures
 
 After threshold → fallback response, alert Ops
 
-Q8: Monitor API latency/failures?
+---
+
+#### Q8 — Monitor API latency/failures?
+
+**Answer**
 
 Prometheus metrics: request duration, error rate
 
 Grafana dashboards
 
-Q9: Rate limiting per user/service?
+---
+
+#### Q9 — Rate limiting per user/service?
+
+**Answer**
 
 API Gateway → token bucket / leaky bucket algorithm
 
 Prevent abuse / DDOS
 
-Q10: Large payload handling?
+---
+
+#### Q10 — Large payload handling?
+
+**Answer**
 
 Chunking / streaming
 
 Compress JSON payloads (Gzip)
 
-2️⃣ Database & Transactions
-Q11: ACID transaction in Payment DB?
+---
+
+### Topic B — Database & transactions
+
+#### Q11 — ACID transaction in Payment DB?
+
+**Answer**
 
 Begin transaction → insert payment → update order → commit
 
 SERIALIZABLE → avoid double payments, highest isolation
 
-Q12: Prevent double payment / race?
+---
 
-Lock row (SELECT ... FOR UPDATE)
+#### Q12 — Prevent double payment / race?
 
-Use SERIALIZABLE isolation or unique constraints
+**Answer**
 
-Q13: Scale Order DB for read-heavy workload?
+- Lock the hot row while deciding:
+
+```sql
+-- Example: serialize updates to one order’s payment rows
+SELECT * FROM payments WHERE order_id = ? FOR UPDATE;
+```
+
+- Pair with **SERIALIZABLE** / **REPEATABLE READ** (as appropriate) or **unique constraints** on idempotency keys.
+
+---
+
+#### Q13 — Scale Order DB for read-heavy workload?
+
+**Answer**
 
 Read replicas for query offloading
 
 Redis cache for hot data
 
-Q14: Redis vs SQL DB?
+---
+
+#### Q14 — Redis vs SQL DB?
+
+**Answer**
 
 Redis: fast reads, hot data (recent orders, payment status)
 
 SQL DB: persistent, ACID transactions
 
-Q15: Multi-region DB replication?
+---
+
+#### Q15 — Multi-region DB replication?
+
+**Answer**
 
 Master-slave or multi-master replication
 
 Failover strategy: auto-switch primary if region fails
 
-Q16: Eventual consistency?
+---
+
+#### Q16 — Eventual consistency?
+
+**Answer**
 
 Kafka event-driven updates → consumers update local DB asynchronously
 
 Accept small time lag
 
-Q17: Isolation levels effect on performance?
+---
+
+#### Q17 — Isolation levels effect on performance?
+
+**Answer**
 
 Higher isolation → less concurrency, more locks
 
 Lower isolation → higher concurrency, risk of phantom reads
 
-Q18: Snowflake/Redshift for analytics?
+---
+
+#### Q18 — Snowflake/Redshift for analytics?
+
+**Answer**
 
 Optimized for large-scale, read-heavy, reporting queries
 
 Payment DB handles transactions → not reporting queries
 
-Q19: Audit logs for payments?
+---
+
+#### Q19 — Audit logs for payments?
+
+**Answer**
 
 Append-only table or Kafka topic
 
 Include userId, timestamp, status changes
 
-Q20: Archive old payment data?
+---
+
+#### Q20 — Archive old payment data?
+
+**Answer**
 
 Partition tables by date
 
 Move old partitions to cheaper storage (S3 / cold storage)
 
-3️⃣ Kafka / Event-Driven Architecture
-Q21: Kafka partitioning ensures ordering?
+---
+
+### Topic C — Kafka & event-driven architecture
+
+#### Q21 — Kafka partitioning ensures ordering?
+
+**Answer**
 
 Messages with same key go to same partition → preserves order
 
-Q22: Kafka high availability?
+---
+
+#### Q22 — Kafka high availability?
+
+**Answer**
 
 Leader + followers per partition
 
@@ -1228,7 +962,11 @@ Replication factor ≥ 2
 
 Automatic failover to follower
 
-Q23: Delivery semantics?
+---
+
+#### Q23 — Delivery semantics?
+
+**Answer**
 
 At-least-once: possible duplicates
 
@@ -1236,90 +974,153 @@ At-most-once: possible loss, no duplicates
 
 Exactly-once: idempotent producer + transactional consumer
 
-Q24: Reprocess failed messages?
+---
+
+#### Q24 — Reprocess failed messages?
+
+**Answer**
 
 Replay offsets in consumer
 
 Retry topic / DLQ
 
-Q25: Retry topics & DLQs?
+---
+
+#### Q25 — Retry topics & DLQs?
+
+**Answer**
 
 Retry topic → exponential backoff
 
 DLQ → manual inspection / alerting
 
-Q26: Monitor Kafka lag?
+---
 
-kafka-consumer-groups.sh --describe
+#### Q26 — Monitor Kafka lag?
 
-Prometheus JMX exporter metrics
+**Answer**
 
-Q27: Scale Kafka consumers?
+```bash
+kafka-consumer-groups.sh --describe --group <your-group>
+```
+
+Also expose **JMX** / **Prometheus** metrics (lag, throughput) and alert on **consumer lag** SLOs.
+
+---
+
+#### Q27 — Scale Kafka consumers?
+
+**Answer**
 
 Multiple consumer instances in same group → partitions divided
 
-Q28: Multi-region replication?
+---
+
+#### Q28 — Multi-region replication?
+
+**Answer**
 
 MirrorMaker / Confluent Replicator
 
 Active-active or active-passive
 
-Q29: Idempotent consumer processing?
+---
+
+#### Q29 — Idempotent consumer processing?
+
+**Answer**
 
 Use unique event IDs
 
 Store processed IDs in DB / cache
 
-Q30: Topic naming / partitioning strategy?
+---
+
+#### Q30 — Topic naming / partitioning strategy?
+
+**Answer**
 
 Topic per entity (payment_completed, order_created)
 
 Partition by key (userId/orderId) → preserves ordering, balances load
 
-4️⃣ Authentication & Security
-Q31: OAuth/JWT in API Gateway?
+---
+
+### Topic D — Authentication & security
+
+#### Q31 — OAuth/JWT in API Gateway?
+
+**Answer**
 
 API Gateway verifies JWT token signature, scopes
 
 For microservices → pass token in headers
 
-Q32: SAML SSO for enterprise?
+---
+
+#### Q32 — SAML SSO for enterprise?
+
+**Answer**
 
 User logs in via Identity Provider → receives SAML assertion
 
 Service Provider (API Gateway) validates → issues local session
 
-Q33: Secure internal microservice communication?
+---
+
+#### Q33 — Secure internal microservice communication?
+
+**Answer**
 
 mTLS (mutual TLS)
 
 Service mesh (Istio / Linkerd)
 
-Q34: Kafka topic security?
+---
+
+#### Q34 — Kafka topic security?
+
+**Answer**
 
 ACLs (read/write) per consumer/producer
 
 Encryption in transit (SSL)
 
-Q35: Encrypt sensitive data?
+---
+
+#### Q35 — Encrypt sensitive data?
+
+**Answer**
 
 DB at rest → AES-256
 
 In transit → TLS
 
-Q36: Role-Based Access Control (RBAC)?
+---
+
+#### Q36 — Role-Based Access Control (RBAC)?
+
+**Answer**
 
 Assign roles per service/user
 
 Permissions for API endpoints
 
-Q37: Prevent replay attacks?
+---
+
+#### Q37 — Prevent replay attacks?
+
+**Answer**
 
 Nonce or unique request ID
 
 Expire tokens quickly
 
-Q38: Secure Redis cache?
+---
+
+#### Q38 — Secure Redis cache?
+
+**Answer**
 
 Password authentication
 
@@ -1327,65 +1128,111 @@ TLS
 
 Network isolation (VPC / firewall rules)
 
-5️⃣ DevOps / CI/CD / Monitoring
-Q39: CI/CD pipelines?
+---
+
+### Topic E — DevOps, CI/CD & monitoring
+
+#### Q39 — CI/CD pipelines?
+
+**Answer**
 
 Jenkins / GitHub Actions / ArgoCD
 
 Build → Test → Docker Image → Deploy
 
-Q40: Zero-downtime deployment?
+---
+
+#### Q40 — Zero-downtime deployment?
+
+**Answer**
 
 Blue-Green or Canary deployments
 
-Q41: Docker + Kubernetes usage?
+---
+
+#### Q41 — Docker + Kubernetes usage?
+
+**Answer**
 
 Containerized microservices
 
 Kubernetes → pods, deployment, scaling, rolling updates
 
-Q42: Blue-Green / Canary?
+---
+
+#### Q42 — Blue-Green / Canary?
+
+**Answer**
 
 Deploy new version → small traffic → monitor → switch 100%
 
-Q43: Monitor K8s clusters?
+---
+
+#### Q43 — Monitor K8s clusters?
+
+**Answer**
 
 Prometheus → cluster metrics, pod health
 
 Grafana → dashboards
 
-Q44: Alert on DB latency / Kafka lag?
+---
+
+#### Q44 — Alert on DB latency / Kafka lag?
+
+**Answer**
 
 Prometheus alert rules
 
 Email / Slack / PagerDuty
 
-Q45: Log errors and metrics?
+---
+
+#### Q45 — Log errors and metrics?
+
+**Answer**
 
 ELK stack / Splunk
 
 Centralized logging
 
-Q46: Rollback failed deployment?
+---
+
+#### Q46 — Rollback failed deployment?
+
+**Answer**
 
 Use previous Docker image version
 
 K8s rollback deployment command
 
-Q47: Auto-scaling based on traffic?
+---
+
+#### Q47 — Auto-scaling based on traffic?
+
+**Answer**
 
 HPA (Horizontal Pod Autoscaler)
 
 Scale pods based on CPU/memory or custom metrics
 
-Q48: Handle CI/CD secrets?
+---
+
+#### Q48 — Handle CI/CD secrets?
+
+**Answer**
 
 Vault / AWS Secrets Manager / K8s Secrets
 
 Never store in repo
 
-6️⃣ System Design & Architecture
-Q49: Fault-tolerant multi-region architecture?
+---
+
+### Topic F — System design & architecture
+
+#### Q49 — Fault-tolerant multi-region architecture?
+
+**Answer**
 
 Multi-region DB clusters
 
@@ -1393,27 +1240,47 @@ Multi-region Kafka cluster
 
 Load balancers / DNS failover
 
-Q50: Millions of concurrent payments?
+---
+
+#### Q50 — Millions of concurrent payments?
+
+**Answer**
 
 Horizontal scaling, async processing, Kafka partitions, DB sharding
 
-Q51: Eventual consistency?
+---
+
+#### Q51 — Eventual consistency?
+
+**Answer**
 
 Kafka events → microservices update asynchronously
 
 Accept small lag
 
-Q52: Dead-letter events for failed notifications?
+---
+
+#### Q52 — Dead-letter events for failed notifications?
+
+**Answer**
 
 DLQ per topic → monitoring + alerting
 
 Manual or automated reprocessing
 
-Q53: Monitoring & logging?
+---
+
+#### Q53 — Monitoring & logging?
+
+**Answer**
 
 Prometheus / Grafana / ELK / Splunk → end-to-end observability
 
-Q54: End-to-end latency optimization?
+---
+
+#### Q54 — End-to-end latency optimization?
+
+**Answer**
 
 Reduce DB locks
 
@@ -1423,23 +1290,39 @@ Partition Kafka properly
 
 Async processing
 
-Q55: Data pipelines for analytics?
+---
+
+#### Q55 — Data pipelines for analytics?
+
+**Answer**
 
 Kafka → Stream Processing → Data Warehouse / Snowflake / BigQuery
 
-Q56: Handle traffic spikes?
+---
+
+#### Q56 — Handle traffic spikes?
+
+**Answer**
 
 Autoscaling, Kafka partition balancing, async decoupling
 
 Pre-provision DB read replicas
 
-Q57: Distributed tracing?
+---
+
+#### Q57 — Distributed tracing?
+
+**Answer**
 
 OpenTelemetry → trace request across microservices
 
 Correlate logs / metrics
 
-Q58: Prevent duplicate payments?
+---
+
+#### Q58 — Prevent duplicate payments?
+
+**Answer**
 
 DB unique constraints
 

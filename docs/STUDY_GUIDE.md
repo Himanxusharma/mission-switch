@@ -37,10 +37,12 @@ python3 scripts/split_all_chats.py
 python3 scripts/clean_topic_markdown.py
 python3 scripts/refine_topic_voice.py
 python3 scripts/beautify_playbook_sections.py   # optional: normalize “At a glance” blocks after a split
+python3 scripts/enhance_topic_readability.py    # optional: reader blurb + ASCII diagrams → ```text``` fences
 ```
 
 - **`split_all_chats.py`** — writes **18** files from **`All_chats.md`**; skips **`backend/apis-db-security-git-overview.md`**.
 - **Clean / refine** — all six folders; skip **`README.md`** and the hand-maintained overview **by filename**.
 - **`beautify_playbook_sections.py`** — reapplies the calm on-ramp headings after regenerating (safe to run anytime).
+- **`enhance_topic_readability.py`** — inserts the standard **How to read** line after **`Source:`** (once) and wraps box-drawing ASCII in **` ```text` ** fences (idempotent enough to re-run after edits).
 
 Edit line ranges in `scripts/split_all_chats.py` when you append to **`All_chats.md`**.

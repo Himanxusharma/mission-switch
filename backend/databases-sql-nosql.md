@@ -2,6 +2,8 @@
 
 > **Source:** Extracted from `notes/All_chats.md` (Akamai SDE-II prep). Content preserved; reorganized into Concepts vs Interview sections.
 
+**How to read:** Start with **At a glance** / talk track if present, then the full chapter. **Fenced code blocks** are copy-paste examples; **tables** compare options; **ASCII diagrams** use monospace — widen the pane or scroll horizontally.
+
 ## Concepts
 
 > *Skim **At a glance** first — a short on-ramp. Below the line is the full chapter.*
@@ -53,18 +55,27 @@ Stored on disk
 👉 Index = data structure (usually B-Tree)
 
 📊 B-Tree Internals
+
+```text
         [10, 20]
        /   |   \
     [1-9] [11-19] [21-30]
+```
+
 👉 Instead of scanning all rows:
 
 Jump directly → O(log n)
 
 💥 Without Index
+
+```sql
 SELECT * FROM users WHERE id = 100;
+```
+
 👉 Full table scan → O(n) ❌
 
 🚀 With Index
+
 👉 Binary-like search → O(log n) ✅
 
 🔥 Interview Line:
@@ -88,11 +99,13 @@ SELECT * FROM users WHERE id = 100;
 👉 Data is saved permanently
 
 💣 Isolation Levels (SDE-2 LEVEL)
-Level	Issue
-Read Uncommitted	Dirty read
-Read Committed	Non-repeatable read
-Repeatable Read	Phantom read
-Serializable	Safe
+
+| Level | Issue you tolerate / avoid |
+|-------|----------------------------|
+| Read Uncommitted | Dirty read |
+| Read Committed | Non-repeatable read |
+| Repeatable Read | Phantom read |
+| Serializable | Safest (highest isolation) |
 🧠 PART 3: QUERY OPTIMIZATION
 ⚙️ What happens internally?
 SQL query parsed
@@ -104,7 +117,11 @@ DB decides:
 Index scan OR full scan
 
 💡 Example:
+
+```sql
 SELECT * FROM users WHERE email = 'a@b.com';
+```
+
 👉 If indexed → fast
 👉 If not → slow
 
@@ -136,10 +153,13 @@ Flexible schema
 Example:
 👉 MongoDB
 
+```json
 {
   "name": "Himanshu",
   "skills": ["Java", "Node"]
 }
+```
+
 2️⃣ Key-Value
 👉 Redis
 
